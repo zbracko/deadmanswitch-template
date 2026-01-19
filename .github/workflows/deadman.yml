@@ -4,6 +4,9 @@ on:
     - cron: '0 * * * *' # Checks every hour
   workflow_dispatch:      # Allows manual testing
 
+permissions:
+  contents: write  # Required to create releases
+
 jobs:
   check-inactivity:
     runs-on: ubuntu-latest
@@ -23,9 +26,43 @@ jobs:
           
           echo "Hours since last check-in: $DIFF_HOURS"
           
-          if [ $DIFF_HOURS -ge 49 ]; then 
+          if [ $DIFF_HOURS -ge 0 ]; then 
             echo "EXPIRED=true" >> $GITHUB_OUTPUT
+            echo "🧪 TEST MODE: Sending test email"
           fi
+
+      - name: Create Emergency Release
+        if: steps.hour_check.outputs.EXPIRED == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TIMESTAMP=$(date +%s)
+          RELEASE_TAG="emergency-$TIMESTAMP"
+          
+          echo "Creating emergency release: $RELEASE_TAG"
+          
+          # Create release with all vault files
+          gh release create "$RELEASE_TAG" \
+            ./vault/*.7z \
+            ./vault/*.md \
+            ./vault/*.txt \
+            --title "🚨 Emergency Vault Access - $(date)" \
+            --notes "Emergency access granted on $(date +%Y-%m-%d\ %H:%M:%S\ UTC). Password has been sent via email to authorized beneficiary." \
+            --repo ${{ github.repository }}
+          
+          # Generate direct download URLs
+          VAULT_URL="https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/emergency-vault.7z"
+          HOW_TO_URL="https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/HOW-TO-OPEN.md"
+          QUICK_START_URL="https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/QUICK-START.txt"
+          
+          # Save URLs for email step
+          echo "VAULT_URL=$VAULT_URL" >> $GITHUB_ENV
+          echo "HOW_TO_URL=$HOW_TO_URL" >> $GITHUB_ENV
+          echo "QUICK_START_URL=$QUICK_START_URL" >> $GITHUB_ENV
+          echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_ENV
+          
+          echo "✅ Release created successfully"
+          echo "Vault URL: $VAULT_URL"
 
       - name: Send Emergency Email
         if: steps.hour_check.outputs.EXPIRED == 'true'
@@ -39,9 +76,9 @@ jobs:
           host smtp.gmail.com
           port 587
           auth on
-          user YOUR_GMAIL_ADDRESS@gmail.com
+          user zibradev@gmail.com
           password ${{ secrets.GMAIL_APP_PASSWORD }}
-          from YOUR_GMAIL_ADDRESS@gmail.com
+          from zibradev@gmail.com
           tls on
           tls_starttls on
           tls_trust_file /etc/ssl/certs/ca-certificates.crt
@@ -50,8 +87,8 @@ jobs:
           
           chmod 600 ~/.msmtprc
           
-          # Send email
-          cat << 'EMAILEOF' | mail -s "🚨 EMERGENCY: Vault Access Required" ${{ secrets.BENEFICIARY_EMAIL }}
+          # Send email with direct download links
+          cat << EMAILEOF | mail -s "🚨 EMERGENCY: Vault Access Required" ${{ secrets.BENEFICIARY_EMAIL }}
           ═══════════════════════════════════════════════════════════
           🚨 EMERGENCY NOTIFICATION 🚨
           ═══════════════════════════════════════════════════════════
@@ -64,49 +101,56 @@ jobs:
           ${{ secrets.VAULT_PASSWORD }}
           ═══════════════════════════════════════════════════════════
           
-          📋 FOLLOW THESE 3 STEPS CAREFULLY:
+          📥 DOWNLOAD FILES (NO LOGIN REQUIRED - Just click):
+          
+          ▶ VAULT FILE (Encrypted):
+          $VAULT_URL
+          
+          ▶ INSTRUCTIONS (How to open):
+          $HOW_TO_URL
+          
+          ▶ QUICK START GUIDE:
+          $QUICK_START_URL
+          
+          ═══════════════════════════════════════════════════════════
+          
+          📋 3 SIMPLE STEPS:
           
           ┌─────────────────────────────────────────────────────────┐
-          │ STEP 1: Install 7-Zip (Free, Takes 2 Minutes)          │
+          │ STEP 1: Click "VAULT FILE" link above                  │
+          └─────────────────────────────────────────────────────────┘
+             File downloads automatically. NO GitHub account needed!
+          
+          ┌─────────────────────────────────────────────────────────┐
+          │ STEP 2: Install 7-Zip (Free software)                  │
           └─────────────────────────────────────────────────────────┘
              Go to: www.7-zip.org
-             Download and install it
-             (It's safe and completely free)
+             Takes 2 minutes, safe and free
           
           ┌─────────────────────────────────────────────────────────┐
-          │ STEP 2: Download the Vault File                        │
-          └─────────────────────────────────────────────────────────┘
-             Click: REPLACE_WITH_YOUR_GITHUB_REPO_URL/tree/main/vault
-             Click on: emergency-vault.7z
-             Click the Download button
-          
-          ┌─────────────────────────────────────────────────────────┐
-          │ STEP 3: Extract with Password ⚠️ IMPORTANT!            │
+          │ STEP 3: Extract with Password ⚠️ CRITICAL!             │
           └─────────────────────────────────────────────────────────┘
              ⚠️ DO NOT DOUBLE-CLICK THE FILE!
              
              Instead:
-             1. Open your Downloads folder
+             1. Find file in Downloads folder
              2. RIGHT-CLICK on emergency-vault.7z
              3. Choose "7-Zip" → "Extract Here"
-             4. PASTE the password from above
-             5. Your files will appear!
+             4. PASTE password from above
+             5. Files appear!
           
           ═══════════════════════════════════════════════════════════
           
-          📖 DETAILED STEP-BY-STEP GUIDE:
-          REPLACE_WITH_YOUR_GITHUB_REPO_URL/blob/main/vault/HOW-TO-OPEN.md
-          
-          📄 QUICK REFERENCE (PRINTABLE):
-          REPLACE_WITH_YOUR_GITHUB_REPO_URL/blob/main/vault/QUICK-START.txt
-          
-          ⚠️ IMPORTANT REMINDERS:
-          • Save this email! You need the password above.
-          • You MUST use 7-Zip (not Windows default)
-          • You MUST right-click, not double-click
-          • If stuck, ask a tech-savvy friend to help
+          ⚠️ IMPORTANT:
+          • Save this email - you need the password
+          • All links work without GitHub account
+          • MUST use 7-Zip (not Windows default)
+          • MUST right-click, not double-click
+          • Need help? Download instructions using links above
           
           ═══════════════════════════════════════════════════════════
-          This is an automated Dead Man's Switch safety system.
+          Dead Man's Switch - Release: $RELEASE_TAG
           ═══════════════════════════════════════════════════════════
           EMAILEOF
+          
+          echo "✅ Email sent successfully"
