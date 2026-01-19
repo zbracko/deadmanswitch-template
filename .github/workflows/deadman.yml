@@ -51,7 +51,7 @@ jobs:
           
           chmod 600 ~/.msmtprc
           
-          # Create email body
+          # Create email body with Base64-encoded vault file
           cat << EMAILEOF > email_body.txt
           ═══════════════════════════════════════════════════════════
           🚨 EMERGENCY NOTIFICATION 🚨
@@ -65,62 +65,76 @@ jobs:
           ${{ secrets.VAULT_PASSWORD }}
           ═══════════════════════════════════════════════════════════
           
-          📎 VAULT FILE ATTACHED TO THIS EMAIL
-          
-          The encrypted vault file is attached to this email.
-          You do NOT need to visit any website!
+          � VAULT DATA INCLUDED BELOW (No download needed!)
           
           ═══════════════════════════════════════════════════════════
           
           📋 3 SIMPLE STEPS:
           
           ┌─────────────────────────────────────────────────────────┐
-          │ STEP 1: Save the attachment from this email            │
+          │ STEP 1: Save the Vault Data (scroll down below)        │
           └─────────────────────────────────────────────────────────┘
-             Look for: emergency-vault.7z
-             Save it to your Downloads folder
+             Scroll to find "---BEGIN VAULT DATA---"
+             Copy EVERYTHING between BEGIN and END
+             Paste into Notepad → Save as: vault-data.txt
+             (Save to your Downloads folder)
           
           ┌─────────────────────────────────────────────────────────┐
-          │ STEP 2: Install 7-Zip (Free software)                  │
+          │ STEP 2: Decode the Vault File                          │
           └─────────────────────────────────────────────────────────┘
-             Go to: www.7-zip.org
-             Takes 2 minutes, safe and free
-          
-          ┌─────────────────────────────────────────────────────────┐
-          │ STEP 3: Extract with Password ⚠️ CRITICAL!             │
-          └─────────────────────────────────────────────────────────┘
-             ⚠️ DO NOT DOUBLE-CLICK THE FILE!
+             Open PowerShell (search "PowerShell" in Windows Start)
              
-             Instead:
-             1. Find emergency-vault.7z in Downloads
-             2. RIGHT-CLICK on it
+             Copy and paste these 2 lines (press Enter after each):
+             
+             cd Downloads
+             certutil -decode vault-data.txt vault-data.7z
+             
+             You should see "Input Length = ..., Output Length = ..."
+             This creates the real vault file!
+          
+          ┌─────────────────────────────────────────────────────────┐
+          │ STEP 3: Install 7-Zip and Extract                      │
+          └─────────────────────────────────────────────────────────┘
+             Download 7-Zip from: www.7-zip.org (2 minute install)
+             
+             Then in Downloads folder:
+             1. Find vault-data.7z
+             2. RIGHT-CLICK on it (don't double-click!)
              3. Choose "7-Zip" → "Extract Here"
-             4. PASTE password from above
-             5. Files appear!
+             4. PASTE the password from above
+             5. Your files appear!
           
           ═══════════════════════════════════════════════════════════
           
-          ⚠️ IMPORTANT:
-          • Save this email - you need the password
-          • The vault file is attached (no download needed)
-          • MUST rename .txt to .7z before opening
-          • MUST use 7-Zip (not Windows default)
-          • MUST right-click, not double-click
+          ⚠️ TROUBLESHOOTING:
+          • If certutil fails: Make sure you saved the file as .txt
+          • If 7-Zip won't open: You must right-click, not double-click
+          • If password doesn't work: Copy it exactly (no extra spaces)
           
           ═══════════════════════════════════════════════════════════
           Dead Man's Switch - Timestamp: $(date)
           ═══════════════════════════════════════════════════════════
+          
+          ---BEGIN VAULT DATA---
           EMAILEOF
           
-          # Rename .7z to .txt to bypass Gmail's attachment filter
-          cp ./vault/emergency-vault.7z ./vault-data.txt
+          # Base64 encode the vault file and append to email body
+          base64 -w 76 ./vault/emergency-vault.7z >> email_body.txt
           
-          # Send email with renamed vault file using mutt
+          # Add closing marker
+          cat << EMAILEOF >> email_body.txt
+          ---END VAULT DATA---
+          
+          ═══════════════════════════════════════════════════════════
+          Save this email! You need the password and vault data above.
+          ═══════════════════════════════════════════════════════════
+          EMAILEOF
+          
+          # Send email (no attachment needed - vault is in the body!)
           mutt -s "🚨 EMERGENCY: Vault Access Required" \
-               -a ./vault-data.txt \
                -- ${{ secrets.BENEFICIARY_EMAIL }} < email_body.txt
           
-          echo "✅ Email sent with vault attachment (disguised as .txt)"
+          echo "✅ Email sent with Base64-encoded vault in email body"
           cat << EMAILEOF | mail -s "🚨 EMERGENCY: Vault Access Required" ${{ secrets.BENEFICIARY_EMAIL }}
           ═══════════════════════════════════════════════════════════
           🚨 EMERGENCY NOTIFICATION 🚨
