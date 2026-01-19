@@ -1,8 +1,8 @@
-# 🔒 Dead Man's Switch - Emergency Data Vault
+# Dead Man's Switch - Emergency Data Vault
 
 A **free, zero-cost** automated emergency backup system that monitors your activity and sends encrypted data to a trusted beneficiary if you don't check in for 49 hours.
 
-## ⚡ Features
+## Features
 
 - ✅ **Completely Free** - Uses GitHub Actions (2,000 minutes/month free)
 - ✅ **Zero Maintenance** - Automated hourly checks
@@ -26,7 +26,7 @@ A **free, zero-cost** automated emergency backup system that monitors your activ
                                      with vault password
 ```
 
-## 🚀 Quick Start (15 Minutes Setup)
+## Quick Start (15 Minutes Setup)
 
 ### Prerequisites
 - GitHub account (free)
@@ -248,7 +248,7 @@ A: They're encrypted, so technically yes but they can't read them without your p
 A: Download your vault files locally as backup.
 
 **Q: How secure is this?**  
-A: AES-256 is military-grade. Your biggest risk is password strength.
+A: AES-256 is "military-grade". Your biggest risk is password strength.
 
 **Q: Can I use Outlook instead of Gmail?**  
 A: Yes! Modify the SMTP settings in the workflow file.
