@@ -57,10 +57,9 @@ jobs:
           # Install zip utility
           sudo apt-get update && sudo apt-get install -y zip
           
-          # Create password-protected ZIP (AES-256 encryption)
-          cd vault
-          zip -P "${{ secrets.VAULT_PASSWORD }}" -e ../emergency-vault.zip *
-          cd ..
+          # Create password-protected ZIP
+          # Note: -r recursive, -e encrypt, -P password
+          zip -r -e -P "${{ secrets.VAULT_PASSWORD }}" emergency-vault.zip vault/
           
           echo "✅ ZIP file created with password protection"
           
