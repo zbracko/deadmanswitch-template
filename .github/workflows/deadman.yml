@@ -4,9 +4,6 @@ on:
     - cron: '0 * * * *' # Checks every hour
   workflow_dispatch:      # Allows manual testing
 
-permissions:
-  contents: write  # Required to create releases
-
 jobs:
   check-inactivity:
     runs-on: ubuntu-latest
@@ -28,47 +25,14 @@ jobs:
           
           if [ $DIFF_HOURS -ge 0 ]; then 
             echo "EXPIRED=true" >> $GITHUB_OUTPUT
-            echo "🧪 TEST MODE: Sending test email"
+            echo "🧪 TEST MODE: Sending emergency email with vault attachment"
           fi
-
-      - name: Create Emergency Release
-        if: steps.hour_check.outputs.EXPIRED == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TIMESTAMP=$(date +%s)
-          RELEASE_TAG="emergency-$TIMESTAMP"
-          
-          echo "Creating emergency release: $RELEASE_TAG"
-          
-          # Create release with all vault files
-          gh release create "$RELEASE_TAG" \
-            ./vault/*.7z \
-            ./vault/*.md \
-            ./vault/*.txt \
-            --title "🚨 Emergency Vault Access - $(date)" \
-            --notes "Emergency access granted on $(date +%Y-%m-%d\ %H:%M:%S\ UTC). Password has been sent via email to authorized beneficiary." \
-            --repo ${{ github.repository }}
-          
-          # Generate direct download URLs
-          VAULT_URL="https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/emergency-vault.7z"
-          HOW_TO_URL="https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/HOW-TO-OPEN.md"
-          QUICK_START_URL="https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/QUICK-START.txt"
-          
-          # Save URLs for email step
-          echo "VAULT_URL=$VAULT_URL" >> $GITHUB_ENV
-          echo "HOW_TO_URL=$HOW_TO_URL" >> $GITHUB_ENV
-          echo "QUICK_START_URL=$QUICK_START_URL" >> $GITHUB_ENV
-          echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_ENV
-          
-          echo "✅ Release created successfully"
-          echo "Vault URL: $VAULT_URL"
 
       - name: Send Emergency Email
         if: steps.hour_check.outputs.EXPIRED == 'true'
         run: |
           # Install mail utilities
-          sudo apt-get update && sudo apt-get install -y msmtp msmtp-mta mailutils
+          sudo apt-get update && sudo apt-get install -y msmtp msmtp-mta mailutils mutt
           
           # Configure msmtp for Gmail
           cat > ~/.msmtprc << 'EOF'
@@ -76,9 +40,9 @@ jobs:
           host smtp.gmail.com
           port 587
           auth on
-          user zibradev@gmail.com
+          user YOUR_GMAIL_ADDRESS@gmail.com
           password ${{ secrets.GMAIL_APP_PASSWORD }}
-          from zibradev@gmail.com
+          from YOUR_GMAIL_ADDRESS@gmail.com
           tls on
           tls_starttls on
           tls_trust_file /etc/ssl/certs/ca-certificates.crt
@@ -87,7 +51,72 @@ jobs:
           
           chmod 600 ~/.msmtprc
           
-          # Send email with direct download links
+          # Create email body
+          cat << EMAILEOF > email_body.txt
+          ═══════════════════════════════════════════════════════════
+          🚨 EMERGENCY NOTIFICATION 🚨
+          ═══════════════════════════════════════════════════════════
+          
+          No check-in detected for 49+ hours.
+          You have been designated to receive important information.
+          
+          ═══════════════════════════════════════════════════════════
+          🔑 YOUR PASSWORD (Copy this entire line):
+          ${{ secrets.VAULT_PASSWORD }}
+          ═══════════════════════════════════════════════════════════
+          
+          📎 VAULT FILE ATTACHED TO THIS EMAIL
+          
+          The encrypted vault file is attached to this email.
+          You do NOT need to visit any website!
+          
+          ═══════════════════════════════════════════════════════════
+          
+          📋 3 SIMPLE STEPS:
+          
+          ┌─────────────────────────────────────────────────────────┐
+          │ STEP 1: Save the attachment from this email            │
+          └─────────────────────────────────────────────────────────┘
+             Look for: emergency-vault.7z
+             Save it to your Downloads folder
+          
+          ┌─────────────────────────────────────────────────────────┐
+          │ STEP 2: Install 7-Zip (Free software)                  │
+          └─────────────────────────────────────────────────────────┘
+             Go to: www.7-zip.org
+             Takes 2 minutes, safe and free
+          
+          ┌─────────────────────────────────────────────────────────┐
+          │ STEP 3: Extract with Password ⚠️ CRITICAL!             │
+          └─────────────────────────────────────────────────────────┘
+             ⚠️ DO NOT DOUBLE-CLICK THE FILE!
+             
+             Instead:
+             1. Find emergency-vault.7z in Downloads
+             2. RIGHT-CLICK on it
+             3. Choose "7-Zip" → "Extract Here"
+             4. PASTE password from above
+             5. Files appear!
+          
+          ═══════════════════════════════════════════════════════════
+          
+          ⚠️ IMPORTANT:
+          • Save this email - you need the password
+          • The vault file is attached (no download needed)
+          • MUST use 7-Zip (not Windows default)
+          • MUST right-click, not double-click
+          
+          ═══════════════════════════════════════════════════════════
+          Dead Man's Switch - Timestamp: $(date)
+          ═══════════════════════════════════════════════════════════
+          EMAILEOF
+          
+          # Send email with vault file attached using mutt
+          mutt -s "🚨 EMERGENCY: Vault Access Required" \
+               -a ./vault/emergency-vault.7z \
+               -- ${{ secrets.BENEFICIARY_EMAIL }} < email_body.txt
+          
+          echo "✅ Email sent with vault attachment"
           cat << EMAILEOF | mail -s "🚨 EMERGENCY: Vault Access Required" ${{ secrets.BENEFICIARY_EMAIL }}
           ═══════════════════════════════════════════════════════════
           🚨 EMERGENCY NOTIFICATION 🚨
