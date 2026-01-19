@@ -1,0 +1,112 @@
+name: 49-Hour Emergency Monitor
+on:
+  schedule:
+    - cron: '0 * * * *' # Checks every hour
+  workflow_dispatch:      # Allows manual testing
+
+jobs:
+  check-inactivity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed to read git history
+
+      - name: Calculate Hours Since Last Update
+        id: hour_check
+        run: |
+          # Get timestamp of the last commit for status.txt
+          LAST_COMMIT_SEC=$(git log -1 --format=%ct status.txt)
+          NOW_SEC=$(date +%s)
+          DIFF_HOURS=$(( (NOW_SEC - LAST_COMMIT_SEC) / 3600 ))
+          
+          echo "Hours since last check-in: $DIFF_HOURS"
+          
+          if [ $DIFF_HOURS -ge 49 ]; then 
+            echo "EXPIRED=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Emergency Email
+        if: steps.hour_check.outputs.EXPIRED == 'true'
+        run: |
+          # Install mail utilities
+          sudo apt-get update && sudo apt-get install -y msmtp msmtp-mta mailutils
+          
+          # Configure msmtp for Gmail
+          cat > ~/.msmtprc << 'EOF'
+          account gmail
+          host smtp.gmail.com
+          port 587
+          auth on
+          user YOUR_GMAIL_ADDRESS@gmail.com
+          password ${{ secrets.GMAIL_APP_PASSWORD }}
+          from YOUR_GMAIL_ADDRESS@gmail.com
+          tls on
+          tls_starttls on
+          tls_trust_file /etc/ssl/certs/ca-certificates.crt
+          account default : gmail
+          EOF
+          
+          chmod 600 ~/.msmtprc
+          
+          # Send email
+          cat << 'EMAILEOF' | mail -s "🚨 EMERGENCY: Vault Access Required" ${{ secrets.BENEFICIARY_EMAIL }}
+          ═══════════════════════════════════════════════════════════
+          🚨 EMERGENCY NOTIFICATION 🚨
+          ═══════════════════════════════════════════════════════════
+          
+          No check-in detected for 49+ hours.
+          You have been designated to receive important information.
+          
+          ═══════════════════════════════════════════════════════════
+          🔑 YOUR PASSWORD (Copy this entire line):
+          ${{ secrets.VAULT_PASSWORD }}
+          ═══════════════════════════════════════════════════════════
+          
+          📋 FOLLOW THESE 3 STEPS CAREFULLY:
+          
+          ┌─────────────────────────────────────────────────────────┐
+          │ STEP 1: Install 7-Zip (Free, Takes 2 Minutes)          │
+          └─────────────────────────────────────────────────────────┘
+             Go to: www.7-zip.org
+             Download and install it
+             (It's safe and completely free)
+          
+          ┌─────────────────────────────────────────────────────────┐
+          │ STEP 2: Download the Vault File                        │
+          └─────────────────────────────────────────────────────────┘
+             Click: REPLACE_WITH_YOUR_GITHUB_REPO_URL/tree/main/vault
+             Click on: emergency-vault.7z
+             Click the Download button
+          
+          ┌─────────────────────────────────────────────────────────┐
+          │ STEP 3: Extract with Password ⚠️ IMPORTANT!            │
+          └─────────────────────────────────────────────────────────┘
+             ⚠️ DO NOT DOUBLE-CLICK THE FILE!
+             
+             Instead:
+             1. Open your Downloads folder
+             2. RIGHT-CLICK on emergency-vault.7z
+             3. Choose "7-Zip" → "Extract Here"
+             4. PASTE the password from above
+             5. Your files will appear!
+          
+          ═══════════════════════════════════════════════════════════
+          
+          📖 DETAILED STEP-BY-STEP GUIDE:
+          REPLACE_WITH_YOUR_GITHUB_REPO_URL/blob/main/vault/HOW-TO-OPEN.md
+          
+          📄 QUICK REFERENCE (PRINTABLE):
+          REPLACE_WITH_YOUR_GITHUB_REPO_URL/blob/main/vault/QUICK-START.txt
+          
+          ⚠️ IMPORTANT REMINDERS:
+          • Save this email! You need the password above.
+          • You MUST use 7-Zip (not Windows default)
+          • You MUST right-click, not double-click
+          • If stuck, ask a tech-savvy friend to help
+          
+          ═══════════════════════════════════════════════════════════
+          This is an automated Dead Man's Switch safety system.
+          ═══════════════════════════════════════════════════════════
+          EMAILEOF

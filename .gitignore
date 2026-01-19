@@ -1,0 +1,13 @@
+# Ignore test files
+*.txt.bak
+*.log
+*.tmp
+test-data.txt
+
+# Ignore unencrypted sensitive files
+!vault/*.7z
+!vault/*.md
+!vault/*.txt
+
+# Keep encrypted .7z files - they should be committed
+# The whole point is to store them securely in the repo

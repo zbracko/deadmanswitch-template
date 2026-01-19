@@ -1,0 +1,45 @@
+═══════════════════════════════════════════════════════════════
+  🔒 EMERGENCY VAULT - QUICK START GUIDE 🔒
+═══════════════════════════════════════════════════════════════
+
+YOU RECEIVED AN EMAIL WITH A PASSWORD - KEEP IT OPEN!
+
+───────────────────────────────────────────────────────────────
+STEP 1: Install 7-Zip (One Time Only)
+───────────────────────────────────────────────────────────────
+  1. Go to: www.7-zip.org
+  2. Click "Download" 
+  3. Run the downloaded file
+  4. Click "Install"
+  5. Done!
+
+───────────────────────────────────────────────────────────────
+STEP 2: Download the Vault File
+───────────────────────────────────────────────────────────────
+  1. Go to: https://github.com/zbracko/deadmanswitch/tree/main/vault
+  2. Click on: emergency-vault.7z
+  3. Click the "Download" button
+  4. File saves to your Downloads folder
+
+───────────────────────────────────────────────────────────────
+STEP 3: Extract with Password ⚠️ CRITICAL STEP!
+───────────────────────────────────────────────────────────────
+  DO NOT DOUBLE-CLICK THE FILE!
+  
+  Instead:
+  1. Open your Downloads folder
+  2. FIND: emergency-vault.7z
+  3. RIGHT-CLICK on it
+  4. Choose: 7-Zip → Extract Here
+  5. PASTE the password from your email
+  6. Click OK
+  7. Your files appear!
+
+───────────────────────────────────────────────────────────────
+⚠️ REMEMBER: RIGHT-CLICK, not double-click!
+───────────────────────────────────────────────────────────────
+
+Need help? Ask a friend to follow these steps with you.
+Full instructions: See HOW-TO-OPEN.md file
+
+═══════════════════════════════════════════════════════════════

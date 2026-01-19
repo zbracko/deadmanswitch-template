@@ -1,0 +1,5 @@
+Last check-in: 2026-01-19
+
+# Instructions:
+# Update this file with the current date every 48 hours to prevent the emergency email from being sent.
+# You can do this via GitHub web interface or command line.
