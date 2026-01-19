@@ -51,231 +51,18 @@ jobs:
           
           chmod 600 ~/.msmtprc
           
-          # Create self-contained HTML file with embedded vault data
-          VAULT_BASE64=$(base64 -w 0 ./vault/emergency-vault.7z)
+          # Try creating a password-protected ZIP instead of 7z (Windows native support!)
+          echo "� Creating password-protected ZIP file..."
           
-          cat << 'HTMLEOF' > vault-download.html
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>🚨 Emergency Vault Access</title>
-              <style>
-                  body {
-                      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                      max-width: 800px;
-                      margin: 50px auto;
-                      padding: 30px;
-                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                      color: #333;
-                  }
-                  .container {
-                      background: white;
-                      border-radius: 15px;
-                      padding: 40px;
-                      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                  }
-                  h1 {
-                      color: #d32f2f;
-                      text-align: center;
-                      font-size: 2.5em;
-                      margin-bottom: 10px;
-                  }
-                  .subtitle {
-                      text-align: center;
-                      color: #666;
-                      margin-bottom: 30px;
-                      font-size: 1.1em;
-                  }
-                  .password-box {
-                      background: #fff3cd;
-                      border: 3px solid #ffc107;
-                      border-radius: 10px;
-                      padding: 20px;
-                      margin: 30px 0;
-                      text-align: center;
-                  }
-                  .password {
-                      font-size: 2em;
-                      font-weight: bold;
-                      color: #d32f2f;
-                      font-family: 'Courier New', monospace;
-                      letter-spacing: 2px;
-                      user-select: all;
-                  }
-                  .download-btn {
-                      display: block;
-                      width: 100%;
-                      padding: 20px;
-                      font-size: 1.5em;
-                      font-weight: bold;
-                      color: white;
-                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                      border: none;
-                      border-radius: 10px;
-                      cursor: pointer;
-                      margin: 30px 0;
-                      transition: transform 0.2s, box-shadow 0.2s;
-                  }
-                  .download-btn:hover {
-                      transform: translateY(-2px);
-                      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-                  }
-                  .download-btn:active {
-                      transform: translateY(0);
-                  }
-                  .steps {
-                      background: #f8f9fa;
-                      border-radius: 10px;
-                      padding: 20px;
-                      margin: 20px 0;
-                  }
-                  .step {
-                      margin: 15px 0;
-                      padding: 15px;
-                      background: white;
-                      border-left: 4px solid #667eea;
-                      border-radius: 5px;
-                  }
-                  .step-number {
-                      display: inline-block;
-                      background: #667eea;
-                      color: white;
-                      width: 30px;
-                      height: 30px;
-                      border-radius: 50%;
-                      text-align: center;
-                      line-height: 30px;
-                      margin-right: 10px;
-                      font-weight: bold;
-                  }
-                  .warning {
-                      background: #ffebee;
-                      border: 2px solid #d32f2f;
-                      border-radius: 10px;
-                      padding: 20px;
-                      margin: 20px 0;
-                  }
-                  .success {
-                      background: #e8f5e9;
-                      border: 2px solid #4caf50;
-                      border-radius: 10px;
-                      padding: 20px;
-                      margin: 20px 0;
-                      display: none;
-                  }
-                  code {
-                      background: #f5f5f5;
-                      padding: 2px 8px;
-                      border-radius: 3px;
-                      font-family: 'Courier New', monospace;
-                  }
-              </style>
-          </head>
-          <body>
-              <div class="container">
-                  <h1>🚨 Emergency Vault Access</h1>
-                  <div class="subtitle">Dead Man's Switch Activated</div>
-                  
-                  <div class="password-box">
-                      <div style="font-size: 1.1em; margin-bottom: 10px;">🔑 Your Password:</div>
-                      <div class="password" id="password">VAULT_PASSWORD_PLACEHOLDER</div>
-                      <div style="font-size: 0.9em; color: #666; margin-top: 10px;">
-                          Click to select all, then copy (Ctrl+C)
-                      </div>
-                  </div>
-                  
-                  <button class="download-btn" onclick="downloadVault()">
-                      📦 Download Vault File (emergency-vault.7z)
-                  </button>
-                  
-                  <div class="success" id="success">
-                      ✅ File downloaded! Check your Downloads folder for <code>emergency-vault.7z</code>
-                  </div>
-                  
-                  <div class="steps">
-                      <h2 style="margin-top: 0;">📋 Next Steps:</h2>
-                      
-                      <div class="step">
-                          <span class="step-number">1</span>
-                          <strong>Click the download button above</strong><br>
-                          The file <code>emergency-vault.7z</code> will save to your Downloads folder
-                      </div>
-                      
-                      <div class="step">
-                          <span class="step-number">2</span>
-                          <strong>Install 7-Zip</strong> (if you don't have it)<br>
-                          Visit <a href="https://www.7-zip.org" target="_blank">www.7-zip.org</a> - Free and safe (2 minute install)
-                      </div>
-                      
-                      <div class="step">
-                          <span class="step-number">3</span>
-                          <strong>Extract the vault</strong><br>
-                          • Go to your Downloads folder<br>
-                          • <strong>RIGHT-CLICK</strong> on <code>emergency-vault.7z</code> (don't double-click!)<br>
-                          • Choose "7-Zip" → "Extract Here"<br>
-                          • Enter the password shown above<br>
-                          • Your files will appear! 🎉
-                      </div>
-                  </div>
-                  
-                  <div class="warning">
-                      <strong>⚠️ Important Notes:</strong><br>
-                      • Save this file - you need the password above<br>
-                      • You MUST use 7-Zip, not Windows default extractor<br>
-                      • You MUST right-click, not double-click the file<br>
-                      • Copy the password exactly (no extra spaces)
-                  </div>
-              </div>
-              
-              <script>
-                  // Embedded vault data (Base64 encoded)
-                  const vaultData = 'VAULT_DATA_PLACEHOLDER';
-                  
-                  function downloadVault() {
-                      try {
-                          // Decode Base64 to binary
-                          const binaryString = atob(vaultData);
-                          const bytes = new Uint8Array(binaryString.length);
-                          for (let i = 0; i < binaryString.length; i++) {
-                              bytes[i] = binaryString.charCodeAt(i);
-                          }
-                          
-                          // Create blob and download
-                          const blob = new Blob([bytes], { type: 'application/x-7z-compressed' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = 'emergency-vault.7z';
-                          document.body.appendChild(a);
-                          a.click();
-                          document.body.removeChild(a);
-                          URL.revokeObjectURL(url);
-                          
-                          // Show success message
-                          document.getElementById('success').style.display = 'block';
-                      } catch (error) {
-                          alert('Error downloading file. Please contact support.\\nError: ' + error.message);
-                      }
-                  }
-                  
-                  // Auto-select password when clicked
-                  document.getElementById('password').addEventListener('click', function() {
-                      const range = document.createRange();
-                      range.selectNodeContents(this);
-                      const selection = window.getSelection();
-                      selection.removeAllRanges();
-                      selection.addRange(range);
-                  });
-              </script>
-          </body>
-          </html>
-          HTMLEOF
+          # Install zip utility
+          sudo apt-get update && sudo apt-get install -y zip
           
-          # Replace placeholders with actual values
-          sed -i "s/VAULT_PASSWORD_PLACEHOLDER/${{ secrets.VAULT_PASSWORD }}/g" vault-download.html
-          sed -i "s|VAULT_DATA_PLACEHOLDER|$VAULT_BASE64|g" vault-download.html
+          # Create password-protected ZIP (AES-256 encryption)
+          cd vault
+          zip -P "${{ secrets.VAULT_PASSWORD }}" -e ../emergency-vault.zip *
+          cd ..
+          
+          echo "✅ ZIP file created with password protection"
           
           # Create simple email body
           cat << EMAILEOF > email_body.txt
@@ -287,45 +74,47 @@ jobs:
           You have been designated to receive important information.
           
           ═══════════════════════════════════════════════════════════
+          🔑 YOUR PASSWORD (Copy this entire line):
+          ${{ secrets.VAULT_PASSWORD }}
+          ═══════════════════════════════════════════════════════════
           
-          📎 ATTACHED FILE: vault-download.html
+          � VAULT FILE ATTACHED (emergency-vault.zip)
           
           ═══════════════════════════════════════════════════════════
           
-          📋 SIMPLE INSTRUCTIONS:
+          📋 SUPER SIMPLE 2-STEP PROCESS:
           
-          1. Save the attached file (vault-download.html) from this email
+          ┌─────────────────────────────────────────────────────────┐
+          │ STEP 1: Save the attached ZIP file from this email     │
+          └─────────────────────────────────────────────────────────┘
+             • Look for: emergency-vault.zip (attached to this email)
+             • Save it to your Downloads folder
+             • Windows can open ZIP files natively - no extra software!
           
-          2. Double-click the file to open it in your web browser
-          
-          3. Click the big "Download Vault File" button
-          
-          4. Install 7-Zip from www.7-zip.org (if needed)
-          
-          5. Right-click the downloaded file → 7-Zip → Extract Here
-          
-          6. Use the password shown in the HTML file
+          ┌─────────────────────────────────────────────────────────┐
+          │ STEP 2: Extract with Password ⚠️ EASY!                 │
+          └─────────────────────────────────────────────────────────┘
+             1. Go to your Downloads folder
+             2. RIGHT-CLICK on emergency-vault.zip
+             3. Choose "Extract All..."
+             4. PASTE the password from above when asked
+             5. Your files appear! 🎉
           
           ═══════════════════════════════════════════════════════════
           
-          That's it! The HTML file contains everything you need:
-          • Your password (displayed prominently)
-          • One-click vault download
-          • Step-by-step instructions
-          
-          ⚠️ IMPORTANT:
-          • Keep this email for reference
-          • The HTML file works offline (no internet needed after download)
-          • Use 7-Zip, not Windows default (must right-click!)
+          ⚠️ IMPORTANT NOTES:
+          • Save this email - you need the password
+          • Windows handles ZIP files automatically (no software needed!)
+          • Just right-click and choose "Extract All..."
+          • Copy the password exactly (no extra spaces)
           
           ═══════════════════════════════════════════════════════════
           Dead Man's Switch - Timestamp: $(date)
           ═══════════════════════════════════════════════════════════
           EMAILEOF
           
-          # Send email with HTML file attached
+          # Send email with ZIP file attached
           mutt -s "🚨 EMERGENCY: Vault Access Required" \
-               -a vault-download.html \
+               -a emergency-vault.zip \
                -- ${{ secrets.BENEFICIARY_EMAIL }} < email_body.txt
           
-          echo "✅ Email sent with self-contained HTML vault downloader"
